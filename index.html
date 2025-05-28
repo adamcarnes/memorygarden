@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Garden Prototype</title>
+    <style>
+        /* Base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #D8B3A3 0%, #F3E5AB 100%);
+            color: #0D0308;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        /* Main container with two columns */
+        .container {
+            display: flex;
+            width: 92%;
+            max-width: 1200px;
+            height: 85vh;
+            background: rgba(242, 231, 225, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(13, 3, 8, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Left column - Recording interface */
+        .recording-column {
+            flex: 1;
+            background: linear-gradient(135deg, #F3E5AB 0%, #DAB153 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* Right column - Memory display */
+        .memory-column {
+            flex: 1;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Station title and prompt */
+        .station-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+            color: #0D0308;
+            text-shadow: 0 2px 8px rgba(255,255,255,0.3);
+        }
+        
+        /* Scent image styling */
+        .scent-image-container {
+            width: 100%;
+            height: 180px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        
+        .scent-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .scent-image:hover {
+            transform: scale(1.02);
+        }
+        
+        .station-prompt {
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0D0308;
+            font-weight: 400;
+            text-shadow: 0 1px 4px rgba(255,255,255,0.2);
+        }
+        
+        /* Recording button */
+        .record-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .record-button {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(135deg, #DAB153 0%, #D8B3A3 100%);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            box-shadow: 0 12px 30px rgba(13, 3, 8, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: gentle-throb 3s ease-in-out infinite;
+        }
+        
+        .record-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 40px rgba(13, 3, 8, 0.25);
+            animation: none;
+        }
+        
+        .record-inner {
+            width: 115px;
+            height: 115px;
+            background: linear-gradient(135deg, #DAB153 0%, #D8B3A3 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        
+        .record-icon {
+            width: 45px;
+            height: 45px;
+            background-color: #0D0308;
+            border-radius: 50%;
+        }
+        
+        .record-pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #DAB153 0%, #D8B3A3 100%);
+            opacity: 0;
+        }
+        
+        @keyframes gentle-throb {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 12px 30px rgba(13, 3, 8, 0.2);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 16px 40px rgba(13, 3, 8, 0.3);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes rapid-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.4);
+                opacity: 0;
+            }
+        }
+        
+        /* Status message */
+        .status-container {
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .status-message {
+            color: #0D0308;
+            font-size: 16px;
+            text-align: center;
+            font-weight: 500;
+            text-shadow: 0 1px 4px rgba(255,255,255,0.2);
+        }
+        
+        .status-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(13, 3, 8, 0.3);
+            border-top-color: #0D0308;
+            border-radius: 50%;
+            margin-top: 12px;
+            display: none;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Navigation */
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+        
+        .nav-button {
+            background: rgba(13, 3, 8, 0.1);
+            border: 1px solid rgba(13, 3, 8, 0.2);
+            color: #0D0308;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-button:hover {
+            background: rgba(13, 3, 8, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .nav-button span {
+            margin: 0 5px;
+        }
+        
+        /* Memory column header */
+        .memory-header {
+            background: linear-gradient(135deg, #D8B3A3 0%, #DAB153 100%);
+            padding: 24px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .memory-header-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0D0308;
+        }
+        
+        .play-random-button {
+            background: rgba(13, 3, 8, 0.1);
+            color: #0D0308;
+            border: 1px solid rgba(13, 3, 8, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+        
+        .play-random-button:hover:not(:disabled) {
+            background: rgba(13, 3, 8, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .play-random-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Memory list */
+        .memory-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 16px;
+        }
+        
+        /* Memory card */
+        .memory-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            animation: slide-up 0.4s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .memory-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .memory-text {
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+            color: #374151;
+        }
+        
+        .memory-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #9ca3af;
+            padding-right: 50px;
+        }
+        
+        .memory-language {
+            font-style: italic;
+            font-weight: 500;
+        }
+        
+        .memory-time {
+            text-align: right;
+        }
+        
+        /* Play button */
+        .play-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #DAB153 0%, #D8B3A3 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(218, 177, 83, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(218, 177, 83, 0.4);
+        }
+        
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6px 0 6px 10px;
+            border-color: transparent transparent transparent #0D0308;
+            margin-left: 2px;
+        }
+        
+        .play-button.playing .play-icon {
+            width: 8px;
+            height: 8px;
+            border: none;
+            background-color: #0D0308;
+            margin-left: 0;
+        }
+        
+        /* Permission overlay */
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(216, 179, 163, 0.95) 0%, rgba(243, 229, 171, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #0D0308;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .permission-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-shadow: 0 2px 8px rgba(255,255,255,0.3);
+        }
+        
+        .permission-description {
+            max-width: 520px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .permission-button {
+            background: linear-gradient(135deg, #DAB153 0%, #D8B3A3 100%);
+            color: #0D0308;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(13, 3, 8, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .permission-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(13, 3, 8, 0.3);
+        }
+        
+        /* Browser compatibility warning */
+        .browser-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #D8B3A3 0%, #DAB153 100%);
+            color: #0D0308;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 2000;
+            display: none;
+        }
+        
+        /* Scrollbar styling */
+        .memory-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .memory-list::-webkit-scrollbar-track {
+            background: #F2E7E1;
+            border-radius: 3px;
+        }
+        
+        .memory-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #D8B3A3 0%, #DAB153 100%);
+            border-radius: 3px;
+        }
+        
+        .memory-list::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #D8B3A3 0%, #C9A147 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Browser compatibility warning -->
+    <div class="browser-warning" id="browserWarning">
+        This application requires a modern browser that supports microphone access. Please use Chrome, Firefox, Edge, or Safari.
+    </div>
+
+    <!-- Permission Overlay -->
+    <div class="permission-overlay" id="permissionOverlay">
+        <h1 class="permission-title">Memory Garden Prototype</h1>
+        <p class="permission-description">Share your memories and experiences with these scents. We'll need access to your microphone to record your voice.</p>
+        <button class="permission-button" id="permissionButton">Allow Microphone Access</button>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Left Column - Recording Interface -->
+        <div class="recording-column">
+            <h1 class="station-title" id="stationTitle">Vanilla</h1>
+            
+            <!-- New image container below title -->
+            <div class="scent-image-container">
+                <img id="scentImage" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Vanilla1web.jpg/500px-Vanilla1web.jpg" alt="Vanilla" class="scent-image">
+            </div>
+            
+            <p class="station-prompt" id="stationPrompt">
+                What does this sweet, warm scent remind you of?
+            </p>
+            
+            <div class="record-container">
+                <button class="record-button" id="recordButton">
+                    <div class="record-pulse" id="recordPulse"></div>
+                    <div class="record-inner">
+                        <div class="record-icon"></div>
+                    </div>
+                </button>
+            </div>
+            
+            <div class="status-container">
+                <div class="status-message" id="statusMessage"></div>
+                <div class="status-spinner" id="statusSpinner"></div>
+            </div>
+            
+            <div class="navigation">
+                <button class="nav-button" id="prevButton">
+                    ← <span>Previous Scent</span>
+                </button>
+                <button class="nav-button" id="nextButton">
+                    <span>Next Scent</span> →
+                </button>
+            </div>
+        </div>
+        
+        <!-- Right Column - Memory Display -->
+        <div class="memory-column">
+            <div class="memory-header">
+                <h2 class="memory-header-title">Visitor Memories</h2>
+                <button class="play-random-button" id="playRandomButton" disabled>Play A Memory</button>
+            </div>
+            
+            <div class="memory-list" id="memoryList">
+                <!-- Memory cards will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check browser compatibility first
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for required APIs
+            const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+            const hasMediaRecorder = !!window.MediaRecorder;
+            
+            if (!hasMediaDevices || !hasMediaRecorder) {
+                document.getElementById('browserWarning').style.display = 'block';
+                document.getElementById('permissionButton').disabled = true;
+                document.getElementById('permissionButton').textContent = 'Not Supported in This Browser';
+            }
+        });
+
+        // DOM Elements
+        const permissionOverlay = document.getElementById('permissionOverlay');
+        const permissionButton = document.getElementById('permissionButton');
+        const recordButton = document.getElementById('recordButton');
+        const recordPulse = document.getElementById('recordPulse');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusSpinner = document.getElementById('statusSpinner');
+        const stationTitle = document.getElementById('stationTitle');
+        const stationPrompt = document.getElementById('stationPrompt');
+        const scentImage = document.getElementById('scentImage'); // New image element
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const memoryList = document.getElementById('memoryList');
+        const playRandomButton = document.getElementById('playRandomButton');
+        
+        // State variables
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingStream = null;
+        let silenceDetectionInterval = null;
+        let silenceCounter = 0;
+        let recordingTimeout = null;
+        let rapidPulseTimeout = null;
+        let maxRecordingTime = null;
+        let lastRecordingId = null;
+        let memoryCounter = 0; // To track memory numbers
+        
+        // Global audio context to prevent repeated permission requests
+        let globalAudioContext = null;
+        let globalAnalyser = null;
+        
+        // Scent stations data - now with image URLs
+        const stations = [
+            {
+                id: 'copal',
+                title: 'Copal',
+                prompt: 'What story does this scent trigger in your mind?',
+                imageUrl: 'https://media.istockphoto.com/id/1218853825/photo/frankincense-incense-or-copal-aromatic-smoke-of-tradition-during-aztec-dance-rituals.jpg?s=612x612&w=0&k=20&c=Lw7UFOHz6g22fpxnW0lEKWLqmr4lgEmpbfsWxKD2fpo='
+            },
+            {
+                id: 'vanilla',
+                title: 'Vanilla',
+                prompt: 'What does this sweet, warm scent remind you of?',
+                imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Vanilla1web.jpg/500px-Vanilla1web.jpg'
+            },
+            {
+                id: 'cempazuchil',
+                title: 'Cempazúchil',
+                prompt: 'What do you imagine when you smell this flower?',
+                imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Cempasuchil_Mexicano.jpg/2880px-Cempasuchil_Mexicano.jpg'
+            }
+        ];
+        
+        let currentStationIndex = 1; // Start with Vanilla
+        
+        // Sample memories for demonstration
+        const sampleMemories = [
+            {
+                text: "This vanilla scent reminds me of baking cookies with my grandmother every Christmas. The kitchen would fill with this warm, comforting aroma.",
+                timestamp: new Date(Date.now() - 1000000),
+                language: 'en'
+            },
+            {
+                text: "Cuando huelo vainilla, recuerdo los pasteles que hacía mi madre en México. La vainilla siempre me trae recuerdos de mi hogar y mi familia.",
+                timestamp: new Date(Date.now() - 2000000),
+                language: 'es'
+            },
+            {
+                text: "The vanilla takes me back to my childhood in New Orleans, where my father would make his special vanilla rice pudding on Sunday afternoons.",
+                timestamp: new Date(Date.now() - 3000000),
+                language: 'en'
+            }
+        ];
+        
+        // Request microphone permission
+        permissionButton.addEventListener('click', async () => {
+            try {
+                // Check if MediaRecorder is supported
+                if (!window.MediaRecorder) {
+                    throw new Error('MediaRecorder is not supported in this browser');
+                }
+                
+                // Request microphone access with explicit constraints
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+                
+                // Store stream reference globally
+                recordingStream = stream;
+                
+                // Setup audio recording with the stream
+                setupAudioRecording(stream);
+                
+                // Hide permission overlay
+                permissionOverlay.style.display = 'none';
+                
+                // Add sample memories
+                sampleMemories.forEach(memory => {
+                    addMemoryCard(memory.text, null, memory.timestamp, memory.language);
+                });
+                
+                // Update play random button (will be disabled since sample memories don't have audio)
+                updatePlayRandomButton();
+                
+                console.log('Microphone access granted successfully');
+                
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                
+                // Show more detailed error message
+                let errorMessage = 'Unable to access your microphone. ';
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMessage += 'Permission denied. Please allow microphone access in your browser settings.';
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMessage += 'No microphone found. Please connect a microphone and try again.';
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorMessage += 'Your microphone is in use by another application. Please close other applications and try again.';
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage += 'The requested microphone settings are not supported by your device.';
+                } else if (!window.MediaRecorder) {
+                    errorMessage += 'Your browser does not support audio recording. Please try a different browser like Chrome or Firefox.';
+                } else {
+                    errorMessage += 'Please ensure you have granted permission and have a working microphone.';
+                }
+                
+                alert(errorMessage);
+                
+                // Update status message as well
+                statusMessage.textContent = 'Microphone access failed';
+                statusMessage.style.color = '#dc3545';
+            }
+        });
+        
+        // Set up audio recording
+        function setupAudioRecording(stream) {
+            try {
+                // Create a single AudioContext to be reused
+                if (!globalAudioContext) {
+                    globalAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    globalAnalyser = globalAudioContext.createAnalyser();
+                    const audioSource = globalAudioContext.createMediaStreamSource(stream);
+                    audioSource.connect(globalAnalyser);
+                    globalAnalyser.fftSize = 256;
+                }
+                
+                // Get supported MIME types
+                let mimeType = 'audio/webm';
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    mimeType = 'audio/webm;codecs=opus';
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    mimeType = 'audio/mp4';
+                } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                    mimeType = 'audio/ogg';
+                }
+                
+                // Create MediaRecorder with options
+                const options = { 
+                    mimeType: mimeType,
+                    audioBitsPerSecond: 128000 // Higher bitrate for better quality
+                };
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                // When data is available
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                // When recording stops
+                mediaRecorder.onstop = async () => {
+                    if (audioChunks.length === 0) {
+                        console.error('No audio data recorded');
+                        statusMessage.textContent = 'No audio recorded';
+                        statusSpinner.style.display = 'none';
+                        return;
+                    }
+                    
+                    const audioBlob = new Blob(audioChunks, { type: mimeType });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // Create unique ID for this recording
+                    const recordingId = Date.now().toString();
+                    lastRecordingId = recordingId;
+                    
+                    // Show processing status
+                    statusMessage.textContent = "Processing your recording...";
+                    statusSpinner.style.display = 'block';
+                    
+                    // For debugging
+                    console.log(`Recording completed: ${audioBlob.size} bytes, MIME type: ${mimeType}`);
+                    
+                    // Add audio memory with placeholder text
+                    memoryCounter++;
+                    const placeholderText = `Audio Memory #${memoryCounter}: ${stations[currentStationIndex].title}`;
+                    addMemoryCard(placeholderText, audioUrl, new Date(), 'en', recordingId);
+                    
+                    // Update status
+                    statusMessage.textContent = 'Memory captured!';
+                    statusSpinner.style.display = 'none';
+                    
+                    // Enable play random button now that we have at least one audio memory
+                    updatePlayRandomButton();
+                    
+                    // Clear status after a delay
+                    setTimeout(() => {
+                        if (statusMessage.textContent === 'Memory captured!') {
+                            statusMessage.textContent = '';
+                        }
+                    }, 3000);
+                };
+                
+                console.log('Audio recording setup completed successfully');
+                
+            } catch (err) {
+                console.error('Error setting up audio recording:', err);
+                alert('Error setting up audio recording. Please refresh the page and try again.');
+            }
+        }
+        
+        // Add memory card
+        function addMemoryCard(text, audioUrl, timestamp, language, recordingId) {
+            // Check if this is still the current recording to prevent duplicates
+            if (recordingId && recordingId !== lastRecordingId) {
+                return;
+            }
+            
+            // Highlight keywords
+            const keywords = {
+                'copal': ['copal', 'copalli'],
+                'vanilla': ['vanilla', 'vainilla'],
+                'cempazúchil': ['cempazúchil', 'cempasúchil', 'marigold', 'flor de muerto']
+            };
+            
+            let highlightedText = text;
+            
+            Object.keys(keywords).forEach(category => {
+                keywords[category].forEach(keyword => {
+                    const regex = new RegExp(keyword, 'gi');
+                    highlightedText = highlightedText.replace(regex, match => 
+                        `<span style="font-weight: bold; color: #DAB153;">${match}</span>`
+                    );
+                });
+            });
+            
+            // Create memory card
+            const card = document.createElement('div');
+            card.className = 'memory-card';
+            
+            // Create text element
+            const textElement = document.createElement('div');
+            textElement.className = 'memory-text';
+            
+            // Add text immediately without typing effect for simplicity
+            textElement.innerHTML = highlightedText;
+            card.appendChild(textElement);
+            
+            // Add metadata
+            const metaElement = document.createElement('div');
+            metaElement.className = 'memory-meta';
+            
+            const langElement = document.createElement('div');
+            langElement.className = 'memory-language';
+            langElement.textContent = language === 'es' ? 'Español' : 'English';
+            
+            const timeElement = document.createElement('div');
+            timeElement.className = 'memory-time';
+            timeElement.textContent = formatDate(timestamp);
+            
+            metaElement.appendChild(langElement);
+            metaElement.appendChild(timeElement);
+            card.appendChild(metaElement);
+            
+            // Add play button if we have audio
+            if (audioUrl) {
+                const playButton = document.createElement('div');
+                playButton.className = 'play-button';
+                
+                const playIcon = document.createElement('div');
+                playIcon.className = 'play-icon';
+                
+                playButton.appendChild(playIcon);
+                card.appendChild(playButton);
+                
+                // Create audio element
+                const audio = new Audio(audioUrl);
+                audio.autoplay = false; // Prevent auto-play
+                
+                // Add click handler
+                playButton.addEventListener('click', () => {
+                    if (audio.paused) {
+                        // Stop any other playing audio
+                        stopAllAudio();
+                        
+                        // Play this audio
+                        audio.play();
+                        playButton.classList.add('playing');
+                    } else {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        playButton.classList.remove('playing');
+                    }
+                });
+                
+                // Handle audio ending
+                audio.addEventListener('ended', () => {
+                    playButton.classList.remove('playing');
+                });
+                
+                // Store audio reference
+                playButton.audioElement = audio;
+            }
+            
+            // Add to memory list - new memories at the top
+            memoryList.insertBefore(card, memoryList.firstChild);
+        }
+        
+        // Format date for display
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('en-US', {
+                month: 'short', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            }).format(date);
+        }
+        
+        // Stop all playing audio
+        function stopAllAudio() {
+            document.querySelectorAll('.play-button.playing').forEach(button => {
+                if (button.audioElement && !button.audioElement.paused) {
+                    button.audioElement.pause();
+                    button.audioElement.currentTime = 0;
+                }
+                button.classList.remove('playing');
+            });
+        }
+        
+        // Update play random button availability
+        function updatePlayRandomButton() {
+            const audioMemories = document.querySelectorAll('.play-button');
+            playRandomButton.disabled = audioMemories.length === 0;
+        }
+        
+        // Play a random memory
+        function playRandomMemory() {
+            const audioMemories = document.querySelectorAll('.play-button');
+            
+            if (audioMemories.length === 0) {
+                statusMessage.textContent = 'No audio memories available';
+                return;
+            }
+            
+            // Stop any currently playing audio
+            stopAllAudio();
+            
+            // Select a random memory
+            const randomIndex = Math.floor(Math.random() * audioMemories.length);
+            const randomPlayButton = audioMemories[randomIndex];
+            
+            // Play the selected memory
+            if (randomPlayButton.audioElement) {
+                randomPlayButton.audioElement.play();
+                randomPlayButton.classList.add('playing');
+                
+                // Show which memory is playing
+                statusMessage.textContent = 'Playing a random memory...';
+                statusMessage.style.color = '#0D0308';
+                
+                // Clear status after a delay
+                setTimeout(() => {
+                    if (statusMessage.textContent === 'Playing a random memory...') {
+                        statusMessage.textContent = '';
+                    }
+                }, 3000);
+            }
+        }
+        
+        // Start recording
+        function startRecording() {
+            if (isRecording || !mediaRecorder) {
+                console.log('Cannot start recording', isRecording ? 'Already recording' : 'MediaRecorder not initialized');
+                return;
+            }
+            
+            try {
+                isRecording = true;
+                audioChunks = [];
+                
+                // Stop the throbbing animation when recording starts
+                recordButton.style.animation = 'none';
+                
+                // Update UI
+                statusMessage.textContent = 'Recording...';
+                recordPulse.style.animation = 'pulse 2s infinite';
+                
+                // Start audio recording with timeslice to get data during recording
+                mediaRecorder.start(1000); // Get data every second
+                console.log('Recording started');
+                
+                // Reset silence counter
+                silenceCounter = 0;
+                
+                // Start monitoring for silence
+                startSilenceDetection();
+                
+                // Set maximum recording time (30 seconds)
+                maxRecordingTime = setTimeout(() => {
+                    // Show rapid pulse at 25 seconds
+                    recordPulse.style.animation = 'rapid-pulse 0.5s infinite';
+                    statusMessage.textContent = 'Recording ending soon...';
+                    
+                    // Stop at 30 seconds
+                    setTimeout(() => {
+                        stopRecording();
+                    }, 5000);
+                }, 25000);
+            } catch (err) {
+                console.error('Error starting recording:', err);
+                isRecording = false;
+                statusMessage.textContent = 'Failed to start recording';
+                statusMessage.style.color = '#dc3545';
+            }
+        }
+        
+        // Start silence detection
+        function startSilenceDetection() {
+            if (!recordingStream || !globalAnalyser) return;
+            
+            const bufferLength = globalAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            silenceDetectionInterval = setInterval(() => {
+                if (!isRecording) {
+                    clearInterval(silenceDetectionInterval);
+                    return;
+                }
+                
+                globalAnalyser.getByteFrequencyData(dataArray);
+                
+                // Calculate average volume
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / bufferLength;
+                
+                // Check for silence
+                if (average < 10) { // Threshold for silence
+                    silenceCounter++;
+                    if (silenceCounter > 30) { // 3 seconds of silence (at 100ms interval)
+                        // Show rapid pulse warning
+                        recordPulse.style.animation = 'rapid-pulse 0.5s infinite';
+                        statusMessage.textContent = 'Recording ending soon...';
+                        
+                        // Stop after 2 more seconds if still silent
+                        rapidPulseTimeout = setTimeout(() => {
+                            if (isRecording) {
+                                stopRecording();
+                            }
+                        }, 2000);
+                    }
+                } else {
+                    // Reset counter if sound detected
+                    silenceCounter = 0;
+                    
+                    // If we were about to end but user started talking again
+                    if (recordPulse.style.animation === 'rapid-pulse 0.5s infinite' && rapidPulseTimeout) {
+                        clearTimeout(rapidPulseTimeout);
+                        rapidPulseTimeout = null;
+                        recordPulse.style.animation = 'pulse 2s infinite';
+                        statusMessage.textContent = 'Recording...';
+                    }
+                }
+            }, 100);
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            if (!isRecording || !mediaRecorder) {
+                console.log('Cannot stop recording', !isRecording ? 'Not recording' : 'MediaRecorder not initialized');
+                return;
+            }
+            
+            try {
+                isRecording = false;
+                
+                // Clear timeouts and intervals
+                clearInterval(silenceDetectionInterval);
+                clearTimeout(maxRecordingTime);
+                if (rapidPulseTimeout) {
+                    clearTimeout(rapidPulseTimeout);
+                    rapidPulseTimeout = null;
+                }
+                
+                // Update UI
+                statusMessage.textContent = '';
+                recordPulse.style.animation = 'none';
+                
+                // Resume gentle throbbing when recording stops
+                recordButton.style.animation = 'gentle-throb 3s ease-in-out infinite';
+                
+                // Stop media recorder
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    console.log('Recording stopped');
+                }
+            } catch (err) {
+                console.error('Error stopping recording:', err);
+                statusMessage.textContent = 'Error processing recording';
+                statusMessage.style.color = '#dc3545';
+            }
+        }
+        
+        // Reset UI after processing
+        function resetUI() {
+            recordPulse.style.animation = 'none';
+            // Resume gentle throbbing when not recording
+            recordButton.style.animation = 'gentle-throb 3s ease-in-out infinite';
+            statusMessage.style.color = '#0D0308'; // Reset color to default
+        }
+        
+        // Update station
+        function updateStation() {
+            const station = stations[currentStationIndex];
+            
+            // Fade out
+            stationTitle.style.opacity = 0;
+            stationPrompt.style.opacity = 0;
+            scentImage.style.opacity = 0;
+            
+            // Update after fade
+            setTimeout(() => {
+                stationTitle.textContent = station.title;
+                stationPrompt.textContent = station.prompt;
+                scentImage.src = station.imageUrl;
+                scentImage.alt = station.title;
+                
+                // Fade in
+                stationTitle.style.opacity = 1;
+                stationPrompt.style.opacity = 1;
+                scentImage.style.opacity = 1;
+            }, 300);
+        }
+        
+        // Handle navigation buttons
+        prevButton.addEventListener('click', () => {
+            currentStationIndex = (currentStationIndex - 1 + stations.length) % stations.length;
+            updateStation();
+        });
+        
+        nextButton.addEventListener('click', () => {
+            currentStationIndex = (currentStationIndex + 1) % stations.length;
+            updateStation();
+        });
+        
+        // Record button click handler
+        recordButton.addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+        
+        // Play random memory button click handler
+        playRandomButton.addEventListener('click', () => {
+            playRandomMemory();
+        });
+        
+        // Clean up resources to prevent memory leaks
+        function cleanupResources() {
+            // Stop all audio playback
+            stopAllAudio();
+            
+            // Clear intervals
+            clearInterval(silenceDetectionInterval);
+            
+            // Stop stream tracks
+            if (recordingStream) {
+                recordingStream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Close audio context
+            if (globalAudioContext && globalAudioContext.state !== 'closed') {
+                globalAudioContext.close();
+            }
+            
+            // Revoke object URLs to prevent memory leaks
+            document.querySelectorAll('.play-button').forEach(button => {
+                if (button.audioElement && button.audioElement.src) {
+                    URL.revokeObjectURL(button.audioElement.src);
+                }
+            });
+        }
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', cleanupResources);
+    </script>
+</body>
+</html>
